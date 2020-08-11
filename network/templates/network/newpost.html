@@ -1,0 +1,12 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block body %}
+    <link rel="stylesheet" href="{% static 'network/styles.css' %}">
+    <form class="form-group" style="margin: 50px;" action="{% url 'new' %}" method="POST">
+        {% csrf_token %}
+        <h4>Create a New Post</h4>
+        <textarea name="post" class="form-control" style="height: 500px; width: 500px;"></textarea>
+        <input class="btn btn-primary" type="submit">
+    </form>
+{% endblock %}

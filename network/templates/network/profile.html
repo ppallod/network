@@ -1,0 +1,101 @@
+{% extends "network/layout.html" %}
+{% load static %}
+{% load abc %}
+{% block body %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+    function fun(x) {
+        var post_id = x.dataset.id
+        var act = x.dataset.action
+
+        fetch('/like', {
+            method: 'PUT',
+            credentials: "same-origin",
+            headers: {
+                "X-CSRFToken": '{{ csrf_token }}',
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                id: post_id,
+                flag: act
+            })
+        })
+
+        .then(response => response.json())
+        .then(result => {
+            const total_likes = result['total_likes'];
+            document.querySelector(`#likes_post_${post_id}`).innerHTML = total_likes
+
+        });
+        if (act === "like"){
+            x.style.color = "red";
+            x.dataset.action="dislike"
+        }
+
+        else {
+            x.style.color = "black";
+            x.dataset.action="like";
+        }
+
+      };
+    </script>
+
+    <h2 style="margin: 25px; padding-bottom: 1%;">{{profile_user.username}}</h2>
+    <div style="margin: 25px;">
+        <strong>Followers - {{followers}}</strong>
+        <strong>Following - {{following}}</strong>
+    </div>
+    <form action="{% url 'profile' id=profile_user.id %}" method="POST" style="margin: 25px;">
+        {% csrf_token %}
+        {% if following_flag == "self" %}
+
+        {% elif following_flag %}
+            <button class= "btn btn-dark" name = "following_button" type="submit" data-follow="{{following_flag}}" value="True">UnFollow</button>
+        {% else %}
+            <button class= "btn btn-dark" name = "following_button" type="submit" data-follow="{{following_flag}}" value="False">Follow</button>
+        {% endif %}
+    </form>
+    {% for post in posts %}
+    <div class="post" style="margin: 25px; padding-bottom: 15px;" >
+        <a href="{% url 'profile' id=post.user.id %}"><strong>{{post.user.username}}</strong></a>
+            <span>{{post.timestamp}}</span>
+        <p id="post_text_{{post.id}}">
+            {{post.text}}
+        </p>
+        <textarea id="post_textarea_{{post.id}}" style="display: none;">{{post.text}}</textarea>
+        <button id="post_save_{{post.id}}" style="display: none;" class="btn btn-dark">Save</button>
+
+        {% if user.is_authenticated %}
+            {% has_liked user post as has_liked_flag %}
+            {% if has_liked_flag %}
+                <button type="button" class="fa fa-thumbs-up" onclick="fun(this)" data-id="{{post.id}}" data-action="dislike" style="color: red;"></button>
+            {% else %}
+                <button type="button" class="fa fa-thumbs-up" onclick="fun(this)" data-id="{{post.id}}" data-action="like"></button>
+            {% endif %}
+                <strong id="likes_post_{{post.id}}">{{post.total_likes}}</strong>
+        {% endif %}
+    </div>
+    {% empty %}
+        <h5>No Posts</h5>
+    {% endfor %}
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1">&laquo; First</a>
+                <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            {% endif %}
+    
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+            <div>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">Next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+                {% endif %}
+            </div>
+        </span>
+    </div>
+{% endblock %}
